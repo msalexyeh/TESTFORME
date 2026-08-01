@@ -22,7 +22,7 @@ def load_data():
       st.error(f"讀取 CSV 檔案失敗: {e}")
       return pd.DataFrame()
   else:
-    # 建立空的 DataFrame 結構（新增「照片檔名」欄位）
+    # 建立空的 DataFrame 結構（含「照片檔名」欄位）
     return pd.DataFrame(
         columns=[
             "日期",
@@ -46,9 +46,9 @@ def save_data(df):
 # --- 2. 介面設計 ---
 st.set_page_config(page_title="行車油耗記錄系統", page_icon="⛽", layout="wide")
 
-st.title("⛽ 駕駛油耗與加油記錄系統 (含照片上傳)")
+st.title("⛽ 駕駛油耗與加油記錄系統 (含資料刪除與照片上傳)")
 st.write(
-    "記錄每次加油的詳細資訊、自由輸入駕駛人，並可上傳加油發票或里程表照片。"
+    "記錄每次加油的詳細資訊、自由輸入駕駛人、上傳照片，並可隨時刪除錯誤記錄。"
 )
 
 # 載入現有資料
@@ -89,7 +89,7 @@ with st.form("fuel_form"):
         help=f"上一筆記錄的公里數為: {last_km} km",
     )
 
-  # 照片上傳欄位（注意：Streamlit 的 file_uploader 在 form 內支援把檔案物件傳遞出來）
+  # 照片上傳欄位
   uploaded_file = st.file_uploader(
       "上傳加油發票 / 里程表照片 (選填)", type=["jpg", "jpeg", "png"]
   )
@@ -98,19 +98,16 @@ with st.form("fuel_form"):
   submitted = st.form_submit_button("送出並儲存記錄")
 
   if submitted:
-    # 檢查是否填寫駕駛人
     if not driver.strip():
       st.warning("⚠️ 請輸入駕駛人姓名！")
     else:
       # 處理照片儲存
       photo_filename = ""
       if uploaded_file is not None:
-        # 為了避免檔名重複，加上時間戳記
         timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
         photo_filename = f"{timestamp_str}_{uploaded_file.name}"
         file_path = os.path.join(UPLOAD_FOLDER, photo_filename)
 
-        # 儲存照片到 uploads/ 資料夾
         with open(file_path, "wb") as f:
           f.write(uploaded_file.getbuffer())
 
@@ -142,10 +139,7 @@ with st.form("fuel_form"):
           ]
       )
 
-      # 將新資料加入現有 DataFrame
       df_existing = pd.concat([df_existing, new_row], ignore_index=True)
-
-      # 儲存回 CSV
       save_data(df_existing)
       st.success("✅ 記錄成功，照片與資料已儲存！")
       st.balloons()
@@ -153,10 +147,56 @@ with st.form("fuel_form"):
 
 # --- 4. 顯示歷史記錄與數據分析 ---
 st.markdown("---")
-st.subheader("📊 歷史加油記錄")
+st.subheader("📊 歷史加油記錄與管理")
 
 if not df_existing.empty:
   st.dataframe(df_existing, use_container_width=True)
+
+  # --- 新增：刪除特定記錄功能 ---
+  with st.expander("🗑️ 刪除特定加油記錄"):
+    st.write("若輸入錯誤，可選擇要刪除的記錄（對應的照片也會一併清除）。")
+
+    # 建立下拉選單選項：顯示索引、日期、駕駛人與公里數供識別
+    delete_options = {
+        idx: (
+            f"索引 {idx} | 日期: {row['日期']} | 駕駛: {row['駕駛人']} |"
+            f" 總價: {row['總價']}元"
+        )
+        for idx, row in df_existing.iterrows()
+    }
+
+    selected_to_delete = st.selectbox(
+        "選擇要刪除的記錄",
+        options=list(delete_options.keys()),
+        format_func=lambda x: delete_options[x],
+    )
+
+    if st.button("確認刪除選定的記錄", type="primary"):
+      if selected_to_delete is not None:
+        # 取得該筆記錄的照片檔名
+        photo_to_delete = df_existing.loc[selected_to_delete, "照片檔名"]
+
+        # 如果有對應的照片檔案，從資料夾中刪除
+        if (
+            pd.notna(photo_to_delete)
+            and str(photo_to_delete).strip() != ""
+        ):
+          target_photo_path = os.path.join(UPLOAD_FOLDER, str(photo_to_delete))
+          if os.path.exists(target_photo_path):
+            try:
+              os.remove(target_photo_path)
+            except Exception as e:
+              st.warning(f"刪除照片檔案失敗: {e}")
+
+        # 從 DataFrame 中移除該列
+        df_existing = df_existing.drop(selected_to_delete).reset_index(
+            drop=True
+        )
+
+        # 重新儲存 CSV
+        save_data(df_existing)
+        st.success("✅ 已成功刪除指定記錄！")
+        st.rerun()
 
   # 下載 CSV 按鈕
   csv_data = df_existing.to_csv(index=False, encoding="utf-8-sig").encode(
@@ -166,20 +206,19 @@ if not df_existing.empty:
       label="📥 下載完整 CSV 記錄檔",
       data=csv_data,
       file_name="fuel_records.csv",
+      mime="text/css",  # 修正 MIME 類型
       mime="text/csv",
   )
 
   # 照片檢視區塊
   st.markdown("### 🖼️ 加油照片檢視")
-  # 篩選出有上傳照片的記錄
   records_with_photo = df_existing[
       df_existing["照片檔名"].notna() & (df_existing["照片檔名"] != "")
   ]
 
   if not records_with_photo.empty:
-    # 讓使用者選擇要檢視哪一筆記錄的照片
     selected_record = st.selectbox(
-        "選擇要檢視照片的記錄（依日期與駕駛人）",
+        "選擇要檢視照片的記錄",
         options=records_with_photo.index,
         format_func=lambda x: (
             f"日期: {records_with_photo.loc[x, '日期']} |"
@@ -188,13 +227,14 @@ if not df_existing.empty:
         ),
     )
 
-    if selected_record is not None:
-      p_name = records_with_photo.loc[selected_record, "照片檔名"]
-      p_path = os.path.join(UPLOAD_FOLDER, str(p_name))
-      if os.path.exists(p_path):
-        st.image(p_path, caption=f"上傳的照片: {p_name}", width=400)
-      else:
-        st.warning("⚠️ 找不到對應的照片檔案（可能已被刪除）。")
+    if selected_record is not None and selected_record in df_existing.index:
+      p_name = df_existing.loc[selected_record, "照片檔名"]
+      if pd.notna(p_name) and str(p_name).strip() != "":
+        p_path = os.path.join(UPLOAD_FOLDER, str(p_name))
+        if os.path.exists(p_path):
+          st.image(p_path, caption=f"上傳的照片: {p_name}", width=400)
+        else:
+          st.warning("⚠️ 找不到對應的照片檔案（可能已被刪除）。")
   else:
     st.info("目前尚無上傳任何照片記錄。")
 
