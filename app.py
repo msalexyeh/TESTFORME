@@ -81,11 +81,13 @@ with st.form("fuel_form"):
   submitted = st.form_submit_button("送出並儲存記錄")
 
   if submitted:
-    # 計算總價
-    total_price = round(unit_price * liters, 2)
-  if not driver.strip():
+    # 檢查是否填寫駕駛人
+    if not driver.strip():
       st.warning("⚠️ 請輸入駕駛人姓名！")
-
+    else:
+      # 計算總價
+      total_price = round(unit_price * liters, 2)
+     
     # 計算行駛里程與平均油耗
     if last_km > 0 and current_km > last_km:
       trip_distance = current_km - last_km
