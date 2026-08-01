@@ -1,7 +1,7 @@
 import streamlit as st
 
 # 設定網頁標題
-st.set_page_config(page_title="李白詩詞登入系統", page_icon="📜", layout="centered")
+st.set_page_config(page_title="登入測試系統", page_icon="📜", layout="centered")
 
 # 初始化 Session State 來追蹤登入狀態
 if "authenticated" not in st.session_state:
