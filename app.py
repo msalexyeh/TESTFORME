@@ -61,7 +61,7 @@ with st.form("fuel_form"):
   col1, col2 = st.columns(2)
   with col1:
     fuel_date = st.date_input("加油日期", datetime.now())
-    driver = st.selectbox("駕駛人", ["爸爸", "媽媽", "我", "其他"])
+    driver = st.selectbox("駕駛人", ["Alex", "Firestar", "Big Bro", "SuperV"])
     unit_price = st.number_input(
         "油價單價 (元/公升)", min_value=0.0, format="%.2f", value=30.0
     )
