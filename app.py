@@ -61,7 +61,7 @@ with st.form("fuel_form"):
   col1, col2 = st.columns(2)
   with col1:
     fuel_date = st.date_input("加油日期", datetime.now())
-    driver = st.selectbox("駕駛人", ["Alex", "Firestar", "Big Bro", "SuperV"])
+    driver = st.text_input("駕駛人姓名", value="", placeholder="例如：王小明")
     unit_price = st.number_input(
         "油價單價 (元/公升)", min_value=0.0, format="%.2f", value=30.0
     )
@@ -83,6 +83,8 @@ with st.form("fuel_form"):
   if submitted:
     # 計算總價
     total_price = round(unit_price * liters, 2)
+  if not driver.strip():
+      st.warning("⚠️ 請輸入駕駛人姓名！")
 
     # 計算行駛里程與平均油耗
     if last_km > 0 and current_km > last_km:
