@@ -12,11 +12,11 @@ st.title("📜 登入測試")
 
 # 如果尚未登入，顯示登入表單
 if not st.session_state.authenticated:
-    st.subheader("請輸入密碼以解鎖詩詞")
+    st.subheader("請輸入密碼")
     
     with st.form("login_form"):
         # 隱藏輸入的密碼
-        password = st.text_input("密碼", type="password", placeholder="請輸入系統密碼")
+        password = st.text_input("密碼", type="password", placeholder="請輸入系統密碼 *提示h開頭")
         submit_button = st.form_submit_button("登入")
         
         if submit_button:
