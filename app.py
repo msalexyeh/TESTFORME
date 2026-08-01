@@ -5,7 +5,7 @@ import streamlit as st
 # 設定網頁標題
 st.set_page_config(page_title="油價記錄小幫手", page_icon="⛽", layout="centered")
 
-st.title("⛽ 個人加油記錄與油價查詢系統")
+st.title("⛽ 加油記錄與油價查詢系統")
 st.markdown("輕鬆記錄每次加油的日期、公升數與單價，追蹤您的油費開銷！")
 
 # 1. 初始化 Session State 用於暫存資料（若正式使用可改接資料庫或 CSV 檔案）
