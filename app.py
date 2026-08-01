@@ -206,7 +206,6 @@ if not df_existing.empty:
       label="📥 下載完整 CSV 記錄檔",
       data=csv_data,
       file_name="fuel_records.csv",
-      mime="text/css",  # 修正 MIME 類型
       mime="text/csv",
   )
 
