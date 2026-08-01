@@ -83,43 +83,6 @@ if not st.session_state.fuel_data.empty:
   chart_data = df_display.sort_values(by="日期")
   st.line_chart(chart_data.set_index("日期")[["單價"]])
 
-import csv
-import os
-
-# 定義 CSV 檔案名稱
-CSV_FILE = "data_maintenance.csv"
-
-def init_csv():
-    """初始化 CSV 檔案：若檔案不存在，則建立並寫入欄位標題"""
-    if not os.path.exists(CSV_FILE):
-        # 決定你的欄位標題（可依需求修改）
-        header = ["ID", "名稱 (Name)", "數值 (Value)", "更新時間 (Timestamp)"]
-        
-        # 建立檔案並寫入標題（使用 utf-8-sig 確保 Excel 開啟時不會亂碼）
-        with open(CSV_FILE, mode="w", newline="", encoding="utf-8-sig") as file:
-            writer = csv.writer(file)
-            writer.writerow(header)
-        print(f"已成功建立新檔案：{CSV_FILE}")
-
-def add_data(item_id, name, value, timestamp):
-    """新增一筆資料到 CSV 檔案中"""
-    row_data = [item_id, name, value, timestamp]
-    
-    # 使用 'a' (append) 模式在檔案結尾追加資料
-    with open(CSV_FILE, mode="a", newline="", encoding="utf-8-sig") as file:
-        writer = csv.writer(file)
-        writer.writerow(row_data)
-    print(f"已成功新增資料至 {CSV_FILE}")
-
-# --- 主程式範例 ---
-if __name__ == "__main__":
-    # 1. 確保 CSV 存在
-    init_csv()
-    
-    # 2. 模擬新增幾筆維護資料
-    add_data(1, "項目 A", 100, "2026-08-01 10:00:00")
-    add_data(2, "項目 B", 250, "2026-08-01 10:05:00")
-  
   # 5. 匯出 CSV 功能
   csv = df_display.to_csv(index=False).encode("utf-8-sig")
   st.download_button(
