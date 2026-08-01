@@ -8,7 +8,7 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 # 主標題
-st.title("📜 李白詩詞系統")
+st.title("📜 登入測試")
 
 # 如果尚未登入，顯示登入表單
 if not st.session_state.authenticated:
